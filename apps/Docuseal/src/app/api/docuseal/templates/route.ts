@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 
 export const runtime = 'nodejs';
 
@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 const DOCUSEAL_API_BASE_URL = "https://api.docuseal.com";
 
 export async function GET(request: Request) {
-  const session = await auth();
+  const session = await auth;
   if (!session) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await auth;
   if (!session) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

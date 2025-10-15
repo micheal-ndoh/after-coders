@@ -20,6 +20,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Loader2, Trash2, PlusCircle, Copy, Download, Eye, Send, Search, Filter, Mail, User, Calendar } from 'lucide-react';
@@ -479,7 +486,7 @@ export default function SubmissionsPage() {
                           </Button>
                         )}
                         {submission.status === 'completed' &&
-                          submission.documents[0]?.url && (
+                          submission.documents?.[0]?.url && (
                             <Link
                               href={submission.documents[0].url}
                               target="_blank"
