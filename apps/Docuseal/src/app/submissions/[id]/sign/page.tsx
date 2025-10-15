@@ -26,9 +26,10 @@ export default function SignSubmissionPage() {
       if (!response.ok) {
         throw new Error("Failed to fetch submission details");
       }
-      const data = await response.json();
-      if (data.signing_link) {
-        setSigningLink(data.signing_link);
+      const data: DocuSeal.Submission = await response.json();
+      // Use embed_src from the first submitter
+      if (data.submitters && data.submitters[0]?.embed_src) {
+        setSigningLink(data.submitters[0].embed_src);
       } else {
         setError("Signing link not found for this submission.");
         toast.error("Signing link missing", {
