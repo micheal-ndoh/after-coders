@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "@/auth";
+import { signUp, signIn } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,44 +18,34 @@ export default function SignUpPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      await signUp.email({
+        email,
+        password,
+        name: email.split("@")[0], // Use email prefix as default name
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Optionally sign in the user after successful signup
-        const result = await signIn("credentials", {
-          email,
-          password,
-          redirect: false,
-        });
-
-        if (result?.error) {
-          setError(result.error);
-        } else {
-          router.push("/");
-        }
-      } else {
-        setError(data.message || "Failed to sign up.");
-      }
+      
+      // Automatically sign in after successful signup
+      await signIn.email({
+        email,
+        password,
+      });
+      
+      router.push("/");
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      setError(err.message || "Failed to sign up.");
     }
   };
 
   const handleGoogleSignIn = async () => {
-    await signIn("google");
+    try {
+      await signIn.social({
+        provider: "google",
+      });
+    } catch (error: any) {
+      setError(error.message || "Google sign-in failed");
+    }
   };
 
-  const handleGitHubSignIn = async () => {
-    await signIn("github");
-  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
@@ -70,7 +60,7 @@ export default function SignUpPage() {
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="Enter your email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -107,13 +97,6 @@ export default function SignUpPage() {
             onClick={handleGoogleSignIn}
           >
             Sign Up with Google
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGitHubSignIn}
-          >
-            Sign Up with GitHub
           </Button>
         </div>
       </div>

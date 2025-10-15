@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Navbar } from '@/components/navbar';
 
@@ -11,16 +10,14 @@ export default function ClientProviders({
   children: React.ReactNode;
 }) {
   return (
-    <SessionProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <Navbar />
-        {children}
-      </ThemeProvider>
-    </SessionProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem={false}
+      disableTransitionOnChange
+    >
+      <Navbar />
+      {children}
+    </ThemeProvider>
   );
 }

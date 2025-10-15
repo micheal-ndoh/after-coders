@@ -20,17 +20,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Loader2, Trash2, PlusCircle, Copy, Download, Eye, Send } from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, Copy, Download, Eye, Send, Search, Filter, Mail, User, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { SubmissionsSkeleton } from '@/components/loading-skeletons';
 
 interface CreateSubmissionForm {
   template_id: number;
@@ -48,6 +43,7 @@ export default function SubmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { register, handleSubmit, reset, control, setValue } = useForm<CreateSubmissionForm>({
     defaultValues: {
@@ -183,23 +179,6 @@ export default function SubmissionsPage() {
     }
   };
 
-  const getStatusBadgeVariant = (
-    status: string
-  ): 'default' | 'secondary' | 'destructive' | 'outline' | 'blue' | 'green' | 'yellow' => {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'blue';
-      case 'declined':
-        return 'destructive';
-      case 'completed':
-        return 'green';
-      case 'expired':
-        return 'yellow';
-      default:
-        return 'default';
-    }
-  };
-
   const onResendInvite = async (submitterId: number) => {
     toast.loading('Resending invite...', { id: `resend-${submitterId}` });
     try {
@@ -215,241 +194,342 @@ export default function SubmissionsPage() {
 
       toast.success('Invite resent', { id: `resend-${submitterId}` });
     } catch (err: unknown) {
-      toast.error('Error resending invite', { 
-        id: `resend-${submitterId}`, 
-        description: err instanceof Error ? err.message : String(err) 
+      toast.error('Error resending invite', {
+        id: `resend-${submitterId}`,
+        description: err instanceof Error ? err.message : String(err),
       });
     }
   };
 
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'SENT':
+      case 'PENDING': // From dev branch
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-400';
+      case 'DECLINED':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400';
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400';
+      case 'OPENED':
+      case 'EXPIRED': // From dev branch
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+    }
+  };
+
+  const filteredSubmissions = submissions.filter((submission) => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch =
+      submission.template.name.toLowerCase().includes(searchLower) ||
+      submission.submitters.some(
+        (s) =>
+          s.email.toLowerCase().includes(searchLower) ||
+          (s.name && s.name.toLowerCase().includes(searchLower))
+      );
+    const matchesStatus =
+      filterStatus === 'ALL' || submission.status.toUpperCase() === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-100px)]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <SubmissionsSkeleton />;
   }
-
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Submissions</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" /> Create Submission
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Submission</DialogTitle>
-            </DialogHeader>
-            <form
-              onSubmit={handleSubmit(onCreateSubmission)}
-              className="space-y-4"
-            >
-              <div>
-                <Label htmlFor="template_id">Template</Label>
-                <Select
-                  onValueChange={(value) => {
-                    setValue('template_id', Number(value));
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((template) => (
-                      <SelectItem key={template.id} value={String(template.id)}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <input type="hidden" {...register('template_id', { valueAsNumber: true })} />
-              </div>
-
-              {fields.map((field, index) => (
-                <div key={field.id} className="space-y-2 rounded-md border p-4">
-                  <h4 className="font-medium">Submitter {index + 1}</h4>
-                  <div>
-                    <Label htmlFor={`submitters.${index}.email`}>Email</Label>
-                    <Input
-                      id={`submitters.${index}.email`}
-                      type="email"
-                      {...register(`submitters.${index}.email`, {
-                        required: true,
-                      })}
-                      disabled={creating}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`submitters.${index}.name`}>
-                      Name (Optional)
-                    </Label>
-                    <Input
-                      id={`submitters.${index}.name`}
-                      {...register(`submitters.${index}.name`)}
-                      disabled={creating}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`submitters.${index}.role`}>
-                      Role (Optional)
-                    </Label>
-                    <Input
-                      id={`submitters.${index}.role`}
-                      {...register(`submitters.${index}.role`)}
-                      disabled={creating}
-                    />
-                  </div>
-                  {index > 0 && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => remove(index)}
-                    >
-                      Remove Submitter
-                    </Button>
-                  )}
-                </div>
-              ))}
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => append({ email: '', name: '', role: '' })}
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Submissions</h1>
+            <p className="text-muted-foreground">
+              Track and manage document submissions and signatures.
+            </p>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <PlusCircle className="mr-2 h-4 w-4" /> Create Submission
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Submission</DialogTitle>
+              </DialogHeader>
+              <form
+                onSubmit={handleSubmit(onCreateSubmission)}
+                className="space-y-4"
               >
-                Add Submitter
-              </Button>
+                <div>
+                  <Label htmlFor="template_id">Template</Label>
+                  <Select
+                    onValueChange={(value) => {
+                      setValue('template_id', Number(value));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={String(template.id)}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <input type="hidden" {...register('template_id', { valueAsNumber: true })} />
+                </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  id="send_email"
-                  type="checkbox"
-                  {...register('send_email')}
-                  defaultChecked
-                />
-                <Label htmlFor="send_email">Send email invitation</Label>
-              </div>
-
-              <Button type="submit" disabled={creating}>
-                {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="mb-4 flex space-x-2">
-        {['ALL', 'pending', 'completed', 'declined', 'expired'].map((status) => (
-          <Button
-            key={status}
-            variant={filterStatus === status ? 'default' : 'outline'}
-            onClick={() => setFilterStatus(status)}
-          >
-            {status}
-          </Button>
-        ))}
-      </div>
-
-      {submissions.length === 0 ? (
-        <p className="text-center text-muted-foreground">No submissions found.</p>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Template</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Recipient</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {submissions.map((submission) => (
-                <TableRow key={submission.id}>
-                  <TableCell className="font-medium">
-                    {submission.template.name}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(submission.status)}>
-                      {submission.status.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {submission.submitters
-                      .map((s) => s.name || s.email)
-                      .join(', ')}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(submission.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {submission.submitters[0]?.embed_src && (
+                {fields.map((field, index) => (
+                  <div key={field.id} className="space-y-2 rounded-md border p-4">
+                    <h4 className="font-medium">Submitter {index + 1}</h4>
+                    <div>
+                      <Label htmlFor={`submitters.${index}.email`}>Email</Label>
+                      <Input
+                        id={`submitters.${index}.email`}
+                        type="email"
+                        {...register(`submitters.${index}.email`, {
+                          required: true,
+                        })}
+                        disabled={creating}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`submitters.${index}.name`}>
+                        Name (Optional)
+                      </Label>
+                      <Input
+                        id={`submitters.${index}.name`}
+                        {...register(`submitters.${index}.name`)}
+                        disabled={creating}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`submitters.${index}.role`}>
+                        Role (Optional)
+                      </Label>
+                      <Input
+                        id={`submitters.${index}.role`}
+                        {...register(`submitters.${index}.role`)}
+                        disabled={creating}
+                      />
+                    </div>
+                    {index > 0 && (
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="mr-2"
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            submission.submitters[0].embed_src || ''
-                          );
-                          toast.info('Signing link copied to clipboard!');
-                        }}
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => remove(index)}
                       >
-                        <Copy className="h-4 w-4" />
+                        Remove Submitter
                       </Button>
                     )}
-                    {submission.status === 'completed' &&
-                      submission.documents && submission.documents[0] && (
-                        <Link
-                          href={submission.documents[0].url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Button variant="ghost" size="icon" className="mr-2">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      )}
-                    {submission.submitters[0]?.embed_src && (
-                      <Link
-                        href={`/submissions/${submission.id}/sign`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="ghost" size="icon" className="mr-2">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    )}
-                    {submission.submitters[0] && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="mr-2"
-                        onClick={() => onResendInvite(submission.submitters[0].id)}
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDeleteSubmission(submission.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => append({ email: '', name: '', role: '' })}
+                >
+                  Add Submitter
+                </Button>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="send_email"
+                    type="checkbox"
+                    {...register('send_email')}
+                    defaultChecked
+                  />
+                  <Label htmlFor="send_email">Send email invitation</Label>
+                </div>
+
+                <Button type="submit" disabled={creating}>
+                  {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Create
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
+      </div>
+
+      {/* Search and Filters */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search submissions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Status</SelectItem>
+                  <SelectItem value="SENT">Sent</SelectItem>
+                  <SelectItem value="OPENED">Opened</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="DECLINED">Declined</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Submissions List */}
+      {filteredSubmissions.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Send className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No submissions found</h3>
+            <p className="text-muted-foreground text-center mb-4">
+              {submissions.length === 0
+                ? "Get started by creating your first submission."
+                : "Try adjusting your search or filter criteria."}
+            </p>
+            {/* The button to create a submission is already in the header, so this might be redundant */}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[30%]">Template</TableHead>
+                  <TableHead className="w-[15%]">Status</TableHead>
+                  <TableHead className="w-[25%]">Recipient</TableHead>
+                  <TableHead className="w-[15%]">Created</TableHead>
+                  <TableHead className="w-[15%] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredSubmissions.map((submission) => (
+                  <TableRow key={submission.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950/50">
+                          <Send className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{submission.template.name}</div>
+                          <div className="text-sm text-muted-foreground">ID: {submission.id}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusBadgeVariant(submission.status)}>
+                        {submission.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted">
+                          <User className="h-3 w-3" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium">
+                            {submission.submitters.map(s => s.name || 'No Name').join(', ')}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {submission.submitters.map(s => s.email).join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-3 w-3" />
+                        <span className="text-sm">
+                          {new Date(submission.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end space-x-1">
+                        {submission.submitters[0]?.embed_src && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                submission.submitters[0].embed_src || ''
+                              );
+                              toast.success('Signing link copied to clipboard!');
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                            <span className="sr-only">Copy signing link</span>
+                          </Button>
+                        )}
+                        {submission.status === 'completed' &&
+                          submission.documents[0]?.url && (
+                            <Link
+                              href={submission.documents[0].url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Download className="h-4 w-4" />
+                                <span className="sr-only">Download document</span>
+                              </Button>
+                            </Link>
+                          )}
+                        {submission.submitters[0]?.embed_src && (
+                          <Link
+                            href={`/submissions/${submission.id}/sign`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View signing form</span>
+                            </Button>
+                          </Link>
+                        )}
+                        {submission.submitters[0] && (
+                           <Button
+                           variant="ghost"
+                           size="icon"
+                           className="mr-2"
+                           onClick={() => onResendInvite(submission.submitters[0].id)}
+                         >
+                           <Send className="h-4 w-4" />
+                         </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+                          onClick={() => onDeleteSubmission(submission.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete submission</span>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
