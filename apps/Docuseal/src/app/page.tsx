@@ -1,10 +1,20 @@
-import { auth } from "@/auth";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+'use client';
 
-export default async function HomePage() {
-  const session = await auth();
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+export default function HomePage() {
+  const { data: session, status } = useSession();
+
+  if (status === 'loading') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-24">
+        <h1 className="text-2xl font-medium">Loading...</h1>
+      </div>
+    );
+  }
 
   if (!session) {
     return (
@@ -31,7 +41,9 @@ export default async function HomePage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Templates</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Templates
+            </CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -51,14 +63,18 @@ export default async function HomePage() {
               +20.1% from last month
             </p>
             <Link href="/templates">
-              <Button variant="link" className="p-0 mt-2">View Templates</Button>
+              <Button variant="link" className="p-0 mt-2">
+                View Templates
+              </Button>
             </Link>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Submissions
+            </CardTitle>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -80,7 +96,9 @@ export default async function HomePage() {
               +180.1% from last month
             </p>
             <Link href="/submissions">
-              <Button variant="link" className="p-0 mt-2">View Submissions</Button>
+              <Button variant="link" className="p-0 mt-2">
+                View Submissions
+              </Button>
             </Link>
           </CardContent>
         </Card>
