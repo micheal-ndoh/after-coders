@@ -34,13 +34,14 @@ interface Template {
 
 interface CreateTemplateForm {
   name: string;
+  file: FileList;
 }
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const { register, handleSubmit, reset } = useForm<CreateTemplateForm>();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateTemplateForm>();
 
   useEffect(() => {
     fetchTemplates();
@@ -63,14 +64,22 @@ export default function TemplatesPage() {
   };
 
   const onCreateTemplate = async (data: CreateTemplateForm) => {
+    if (!data.file || data.file.length === 0) {
+      toast.error("Please select a file to upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("file", data.file[0]);
     setCreating(true);
     try {
       const response = await fetch("/api/docuseal/templates", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          // Content-Type is set automatically by the browser for FormData
         },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -78,7 +87,8 @@ export default function TemplatesPage() {
       }
 
       const newTemplate = await response.json();
-      setTemplates((prev) => [...prev, newTemplate]);
+      // Assuming the API returns the created template object
+      setTemplates((prev) => [newTemplate, ...prev]);
       toast.success("Template created successfully!");
       reset();
     } catch (error: any) {
@@ -144,9 +154,21 @@ export default function TemplatesPage() {
                 <Label htmlFor="name">Template Name</Label>
                 <Input
                   id="name"
-                  {...register("name", { required: true })}
+                  {...register("name", { required: "Template name is required." })}
                   disabled={creating}
                 />
+                {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="file">Document</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  {...register("file", { required: "A file is required." })}
+                  disabled={creating}
+                  accept=".pdf,.docx,.xlsx,.jpeg,.png,.zip,.html"
+                />
+                {errors.file && <p className="text-red-500 text-sm">{errors.file.message}</p>}
               </div>
               <Button type="submit" disabled={creating}>
                 {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
