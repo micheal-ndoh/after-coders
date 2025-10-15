@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db"; // Assuming you have a db instance from drizzle
-import { users } from "@/auth"; // Your Drizzle schema for users
+import { db } from "@/db";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
@@ -15,8 +14,8 @@ export async function POST(request: Request) {
     }
 
     // Check if user already exists
-    const existingUser = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.email, email),
+    const existingUser = await db.user.findUnique({
+      where: { email },
     });
 
     if (existingUser) {
@@ -30,10 +29,11 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create new user
-    await db.insert(users).values({
-      id: crypto.randomUUID(), // Generate a unique ID
-      email,
-      password: hashedPassword,
+    await db.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
     });
 
     return NextResponse.json(

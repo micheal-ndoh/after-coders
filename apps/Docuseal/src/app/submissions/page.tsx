@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -10,42 +10,33 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import {
-  Loader2,
-  Edit,
-  Trash2,
-  PlusCircle,
-  Copy,
-  Download,
-  Eye,
-  Send,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge"; // Assuming you'll add a Badge component
+} from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { Loader2, Trash2, PlusCircle, Copy, Download, Eye } from 'lucide-react';
+import { Badge } from '@/components/ui/badge'; // Assuming you'll add a Badge component
 
 interface Submission {
   id: string;
   template_id: string;
   template_name: string;
-  status: "SENT" | "DECLINED" | "COMPLETED" | "OPENED";
+  status: 'SENT' | 'DECLINED' | 'COMPLETED' | 'OPENED';
   recipient_email: string;
   recipient_name?: string;
   signing_link: string;
@@ -62,10 +53,12 @@ interface CreateSubmissionForm {
 
 export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
+  const [templates, setTemplates] = useState<{ id: string; name: string }[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const { register, handleSubmit, reset } = useForm<CreateSubmissionForm>();
 
   useEffect(() => {
@@ -77,15 +70,17 @@ export default function SubmissionsPage() {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/docuseal/submissions?status=${filterStatus === "ALL" ? "" : filterStatus}`
+        `/api/docuseal/submissions?status=${
+          filterStatus === 'ALL' ? '' : filterStatus
+        }`
       );
       if (!response.ok) {
-        throw new Error("Failed to fetch submissions");
+        throw new Error('Failed to fetch submissions');
       }
       const data = await response.json();
       setSubmissions(data.data);
     } catch (error: any) {
-      toast.error("Error fetching submissions", { description: error.message });
+      toast.error('Error fetching submissions', { description: error.message });
     } finally {
       setLoading(false);
     }
@@ -93,14 +88,14 @@ export default function SubmissionsPage() {
 
   const fetchTemplatesForForm = async () => {
     try {
-      const response = await fetch("/api/docuseal/templates");
+      const response = await fetch('/api/docuseal/templates');
       if (!response.ok) {
-        throw new Error("Failed to fetch templates for form");
+        throw new Error('Failed to fetch templates for form');
       }
       const data = await response.json();
       setTemplates(data.data.map((t: any) => ({ id: t.id, name: t.name })));
     } catch (error: any) {
-      toast.error("Error fetching templates for form", {
+      toast.error('Error fetching templates for form', {
         description: error.message,
       });
     }
@@ -109,70 +104,70 @@ export default function SubmissionsPage() {
   const onCreateSubmission = async (data: CreateSubmissionForm) => {
     setCreating(true);
     try {
-      const response = await fetch("/api/docuseal/submissions", {
-        method: "POST",
+      const response = await fetch('/api/docuseal/submissions', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create submission");
+        throw new Error('Failed to create submission');
       }
 
       const newSubmission = await response.json();
       setSubmissions((prev) => [...prev, newSubmission]);
-      toast.success("Submission created successfully!");
+      toast.success('Submission created successfully!');
       reset();
     } catch (error: any) {
-      toast.error("Error creating submission", { description: error.message });
+      toast.error('Error creating submission', { description: error.message });
     } finally {
       setCreating(false);
     }
   };
 
   const onDeleteSubmission = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this submission?")) return;
+    if (!confirm('Are you sure you want to delete this submission?')) return;
 
     // Optimistic update
     const originalSubmissions = submissions;
     setSubmissions((prev) => prev.filter((s) => s.id !== id));
-    toast.loading("Deleting submission...", { id: "delete-submission" });
+    toast.loading('Deleting submission...', { id: 'delete-submission' });
 
     try {
       const response = await fetch(`/api/docuseal/submissions/${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete submission");
+        throw new Error('Failed to delete submission');
       }
 
-      toast.success("Submission deleted successfully!", {
-        id: "delete-submission",
+      toast.success('Submission deleted successfully!', {
+        id: 'delete-submission',
       });
     } catch (error: any) {
-      toast.error("Error deleting submission", {
+      toast.error('Error deleting submission', {
         description: error.message,
-        id: "delete-submission",
+        id: 'delete-submission',
       });
       setSubmissions(originalSubmissions); // Rollback on error
     }
   };
 
-  const getStatusBadgeVariant = (status: Submission["status"]) => {
+  const getStatusBadgeVariant = (status: Submission['status']) => {
     switch (status) {
-      case "SENT":
-        return "blue";
-      case "DECLINED":
-        return "destructive";
-      case "COMPLETED":
-        return "green";
-      case "OPENED":
-        return "yellow";
+      case 'SENT':
+        return 'blue';
+      case 'DECLINED':
+        return 'destructive';
+      case 'COMPLETED':
+        return 'green';
+      case 'OPENED':
+        return 'yellow';
       default:
-        return "default";
+        return 'default';
     }
   };
 
@@ -206,8 +201,8 @@ export default function SubmissionsPage() {
                 <Label htmlFor="template_id">Template</Label>
                 <Select
                   onValueChange={(value) =>
-                    register("template_id").onChange({
-                      target: { name: "template_id", value },
+                    register('template_id').onChange({
+                      target: { name: 'template_id', value },
                     })
                   }
                   defaultValue={templates[0]?.id}
@@ -229,15 +224,17 @@ export default function SubmissionsPage() {
                 <Input
                   id="recipient_email"
                   type="email"
-                  {...register("recipient_email", { required: true })}
+                  {...register('recipient_email', { required: true })}
                   disabled={creating}
                 />
               </div>
               <div>
-                <Label htmlFor="recipient_name">Recipient Name (Optional)</Label>
+                <Label htmlFor="recipient_name">
+                  Recipient Name (Optional)
+                </Label>
                 <Input
                   id="recipient_name"
-                  {...register("recipient_name")}
+                  {...register('recipient_name')}
                   disabled={creating}
                 />
               </div>
@@ -267,7 +264,9 @@ export default function SubmissionsPage() {
       </div>
 
       {submissions.length === 0 ? (
-        <p className="text-center text-muted-foreground">No submissions found.</p>
+        <p className="text-center text-muted-foreground">
+          No submissions found.
+        </p>
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -304,23 +303,33 @@ export default function SubmissionsPage() {
                         size="icon"
                         className="mr-2"
                         onClick={() => {
-                          navigator.clipboard.writeText(submission.signing_link);
-                          toast.info("Signing link copied to clipboard!");
+                          navigator.clipboard.writeText(
+                            submission.signing_link
+                          );
+                          toast.info('Signing link copied to clipboard!');
                         }}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
                     )}
-                    {submission.status === "COMPLETED" &&
+                    {submission.status === 'COMPLETED' &&
                       submission.download_link && (
-                        <Link href={submission.download_link} target="_blank" rel="noopener noreferrer">
+                        <Link
+                          href={submission.download_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <Button variant="ghost" size="icon" className="mr-2">
                             <Download className="h-4 w-4" />
                           </Button>
                         </Link>
                       )}
                     {submission.signing_link && (
-                      <Link href={`/submissions/${submission.id}/sign`} target="_blank" rel="noopener noreferrer">
+                      <Link
+                        href={`/submissions/${submission.id}/sign`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <Button variant="ghost" size="icon" className="mr-2">
                           <Eye className="h-4 w-4" />
                         </Button>
