@@ -95,8 +95,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await getServerSession();
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  // Accept API key either from server env or from an incoming header.
+  const incomingApiKey = request.headers.get('x-auth-token') || request.headers.get('X-Auth-Token');
+  const apiKey = process.env.DOCUSEAL_API_KEY ?? incomingApiKey ?? '';
+
+  // Allow server-side submission forwarding when we have an API key or a session
+  if (!session && !apiKey) {
+    return NextResponse.json({ message: "Unauthorized - no session and no server API key configured" }, { status: 401 });
   }
 
   try {
@@ -108,7 +113,7 @@ export async function POST(request: Request) {
       const docusealResponse = await fetch(`${DOCUSEAL_API_BASE_URL}/submissions`, {
         method: 'POST',
         headers: {
-          'X-Auth-Token': process.env.DOCUSEAL_API_KEY ?? '',
+          'X-Auth-Token': apiKey,
           'Content-Type': contentType,
         },
         body: Buffer.from(rawBody),
@@ -164,7 +169,7 @@ export async function POST(request: Request) {
     const docusealResponse = await fetch(`${DOCUSEAL_API_BASE_URL}/submissions`, {
       method: 'POST',
       headers: {
-        'X-Auth-Token': process.env.DOCUSEAL_API_KEY ?? '',
+        'X-Auth-Token': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
