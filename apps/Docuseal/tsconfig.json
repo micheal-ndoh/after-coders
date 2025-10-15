@@ -32,12 +32,7 @@
   "include": [
     "../../apps/Docuseal/.next/types/**/*.ts",
     "../../dist/apps/Docuseal/.next/types/**/*.ts",
-    "next-env.d.ts",
-    "src/**/*.js",
-    "src/**/*.jsx",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    ".next/types/**/*.ts"
+    "next-env.d.ts"
   ],
   "exclude": [
     "out-tsc",
