@@ -1,0 +1,17 @@
+ {
+  "mcpServers": {
+    "nx-mcp": {
+      "command": "npx",
+      "args": [
+        "nx-mcp@latest"
+      ],
+      "alwaysAllow": [
+        "nx_docs",
+        "nx_available_plugins",
+        "nx_cloud_cipe_details",
+        "nx_cloud_fix_cipe_failure",
+        "nx_workspace"
+      ]
+    }
+  }
+}
