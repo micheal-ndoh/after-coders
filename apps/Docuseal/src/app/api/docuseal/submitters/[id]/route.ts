@@ -15,7 +15,7 @@ export async function GET(
   try {
     const { id } = params;
     const docusealResponse = await fetch(
-      `${DOCUSEAL_API_BASE_URL}/submissions/${id}`,
+      `${DOCUSEAL_API_BASE_URL}/submitters/${id}`,
       {
         headers: {
           "X-Auth-Token": process.env.DOCUSEAL_API_KEY ?? '',
@@ -34,7 +34,7 @@ export async function GET(
     const data = await docusealResponse.json();
     return NextResponse.json(data);
   } catch (error: unknown) {
-    console.error(`Error fetching DocuSeal submission ${params.id}:`, error);
+    console.error(`Error fetching DocuSeal submitter ${params.id}:`, error);
     return NextResponse.json(
       { message: "Internal Server Error", error: (error as Error).message ?? String(error) },
       { status: 500 }
@@ -42,11 +42,7 @@ export async function GET(
   }
 }
 
-
-// Note: Resend functionality should use PUT /submitters/{id} endpoint
-// This is handled in the submitters API route
-
-export async function DELETE(
+export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
@@ -57,13 +53,17 @@ export async function DELETE(
 
   try {
     const { id } = params;
+    const body = await request.json();
+
     const docusealResponse = await fetch(
-      `${DOCUSEAL_API_BASE_URL}/submissions/${id}`,
+      `${DOCUSEAL_API_BASE_URL}/submitters/${id}`,
       {
-        method: "DELETE",
+        method: "PUT",
         headers: {
           "X-Auth-Token": process.env.DOCUSEAL_API_KEY ?? '',
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify(body),
       }
     );
 
@@ -74,12 +74,10 @@ export async function DELETE(
       });
     }
 
-    return NextResponse.json(
-      { message: "Submission deleted successfully" },
-      { status: 200 }
-    );
+    const data = await docusealResponse.json();
+    return NextResponse.json(data);
   } catch (error: unknown) {
-    console.error(`Error deleting DocuSeal submission ${params.id}:`, error);
+    console.error(`Error updating DocuSeal submitter ${params.id}:`, error);
     return NextResponse.json(
       { message: "Internal Server Error", error: (error as Error).message ?? String(error) },
       { status: 500 }
