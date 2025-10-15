@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,25 +14,27 @@ export default function SignInPage() {
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    if (result?.error) {
-      setError(result.error);
-    } else {
+    try {
+      await signIn.email({
+        email,
+        password,
+      });
       window.location.href = "/";
+    } catch (error: any) {
+      setError(error.message || "Invalid credentials");
     }
   };
 
   const handleGoogleSignIn = async () => {
-    await signIn("google");
+    try {
+      await signIn.social({
+        provider: "google",
+      });
+    } catch (error: any) {
+      setError(error.message || "Google sign-in failed");
+    }
   };
 
-  const handleGitHubSignIn = async () => {
-    await signIn("github");
-  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
@@ -47,7 +49,7 @@ export default function SignInPage() {
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="Enter your email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -84,13 +86,6 @@ export default function SignInPage() {
             onClick={handleGoogleSignIn}
           >
             Sign In with Google
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGitHubSignIn}
-          >
-            Sign In with GitHub
           </Button>
         </div>
       </div>
