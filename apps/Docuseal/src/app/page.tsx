@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useSession } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,11 +12,95 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FileText, Upload, Plus, User, Calendar, MoreVertical, CloudUpload, Grid3X3, AlignJustify, ExternalLink, Edit, Download, Trash2 } from 'lucide-react';
+import {
+  FileText,
+  Upload,
+  User,
+  Calendar,
+  MoreVertical,
+  Grid3X3,
+  AlignJustify,
+  ExternalLink,
+  Edit,
+  Download,
+  Trash2,
+} from 'lucide-react';
 import { DashboardSkeleton } from '@/components/loading-skeletons';
 
 export default function HomePage() {
   const { data: session, isPending } = useSession();
+
+  const [templates, setTemplates] = useState<
+    {
+      id: string | number;
+      name: string;
+      // author can be a simple string or an object returned by the API
+      author?:
+        | string
+        | {
+            first_name?: string;
+            last_name?: string;
+            name?: string;
+            email?: string;
+            [key: string]: unknown;
+          };
+      date?: string;
+    }[]
+  >([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const res = await fetch('/api/docuseal/templates');
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Failed to fetch templates');
+      }
+      const data = await res.json();
+      // Accept multiple possible shapes returned by the proxy or DocuSeal API:
+      // - direct array: [{...}, ...]
+      // - { data: [...] }
+      // - { templates: [...] }
+      // - { items: [...] }
+      let list: any[] = [];
+      if (Array.isArray(data)) list = data;
+      else if (Array.isArray(data?.data)) list = data.data;
+      else if (Array.isArray(data?.templates)) list = data.templates;
+      else if (Array.isArray(data?.items)) list = data.items;
+      else list = [];
+      setTemplates(list);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error('Unable to load templates: ' + message);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const onDeleteTemplate = async (id: string | number) => {
+    if (!confirm('Are you sure you want to delete this template?')) return;
+    const original = templates;
+    setTemplates((prev) => prev.filter((t) => String(t.id) !== String(id)));
+    try {
+      const res = await fetch(`/api/docuseal/templates/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || 'Delete failed');
+      }
+      toast.success('Template deleted');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error('Delete failed: ' + message);
+      setTemplates(original);
+    }
+  };
 
   if (isPending) {
     return <DashboardSkeleton />;
@@ -33,7 +119,8 @@ export default function HomePage() {
             Welcome to DocuSeal App
           </h1>
           <p className="mb-8 text-muted-foreground">
-            Create, manage, and track your document templates and submissions with ease.
+            Create, manage, and track your document templates and submissions
+            with ease.
           </p>
           <div className="space-y-4">
             <Link href="/auth/signin">
@@ -52,51 +139,7 @@ export default function HomePage() {
     );
   }
 
-  // Mock template data matching the screenshot
-  const templates = [
-    {
-      id: 1,
-      name: "rgrh",
-      author: "Michael Ndoh",
-      date: "14 Oct 09:51 PM",
-      icon: FileText,
-    },
-    {
-      id: 2,
-      name: "StoryTime_Parental_Consent_Form",
-      author: "Michael Ndoh", 
-      date: "14 Oct 05:17 PM",
-      icon: FileText,
-    },
-    {
-      id: 3,
-      name: "StoryBook Consent Form",
-      author: "Michael Ndoh",
-      date: "13 Oct 07:40 AM", 
-      icon: FileText,
-    },
-    {
-      id: 4,
-      name: "Integration W-9 Test Form",
-      author: "Michael Ndoh",
-      date: "13 Oct 07:36 AM",
-      icon: FileText,
-    },
-    {
-      id: 5,
-      name: "Laptop",
-      author: "Michael Ndoh",
-      date: "07 Sep 03:09 PM",
-      icon: FileText,
-    },
-    {
-      id: 6,
-      name: "Sample Document",
-      author: "Deus Seal",
-      date: "07 Sep 03:39 PM",
-      icon: FileText,
-    },
-  ];
+  // templates loaded from API into state
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,13 +153,16 @@ export default function HomePage() {
               <div className="flex items-center space-x-2 rounded-lg bg-black px-3 py-2 text-white">
                 <Grid3X3 className="h-4 w-4" />
               </div>
-              
+
               {/* Submissions Box */}
-              <div className="flex items-center space-x-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors">
+              <Link
+                href="/submissions"
+                className="flex items-center space-x-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
                 <AlignJustify className="h-4 w-4" />
-              </div>
+              </Link>
             </div>
-            
+
             {/* Document Templates Title */}
             <h1 className="text-2xl font-bold">Document Templates</h1>
           </div>
@@ -130,49 +176,82 @@ export default function HomePage() {
 
         {/* Templates Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          {templates.map((template) => (
-            <Card key={template.id} className="group cursor-pointer transition-all hover:shadow-md">
+          {(loadingTemplates ? [] : templates).map((template) => (
+            <Card
+              key={template.id}
+              className="group cursor-pointer transition-all hover:shadow-md"
+            >
               <CardContent className="p-6">
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
-                    <template.icon className="h-6 w-6 text-muted-foreground" />
+                    <FileText className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100"
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem className="flex items-center">
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Open
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/templates/${template.id}`}
+                          className="flex items-center"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Open
+                        </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/templates/${template.id}/edit`}
+                          className="flex items-center"
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem className="flex items-center">
                         <Download className="mr-2 h-4 w-4" />
                         Download
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center text-red-600 focus:text-red-600">
+                      <DropdownMenuItem
+                        onSelect={() => onDeleteTemplate(template.id)}
+                        className="flex items-center text-red-600 focus:text-red-600"
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                
+
                 <h3 className="mb-2 font-semibold text-foreground line-clamp-2">
-                  {template.name}
+                  <Link href={`/templates/${template.id}`} className="block">
+                    {template.name}
+                  </Link>
                 </h3>
-                
+
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <User className="h-3 w-3" />
-                  <span>{template.author}</span>
+                  <span>
+                    {typeof template.author === 'string'
+                      ? template.author
+                      : template.author && typeof template.author === 'object'
+                      ? template.author.first_name || template.author.name
+                        ? `${template.author.first_name ?? ''} ${
+                            template.author.last_name ?? ''
+                          }`.trim() || template.author.name
+                        : template.author.email ??
+                          JSON.stringify(template.author)
+                      : 'Unknown'}
+                  </span>
                 </div>
-                
+
                 <div className="mt-2 flex items-center space-x-2 text-sm text-muted-foreground">
                   <Calendar className="h-3 w-3" />
                   <span>{template.date}</span>
@@ -196,7 +275,6 @@ export default function HomePage() {
             </CardContent>
           </Card>
         </div>
-
       </div>
     </div>
   );

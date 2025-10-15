@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import PdfEditor from '@/components/pdf-editor';
 import { toast } from 'sonner';
@@ -80,11 +81,26 @@ export default function EditTemplatePage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/docuseal/templates/${id}`);
-      if (!res.ok) throw new Error('Failed to load template');
-      const data = await res.json();
-      setTemplate(data);
+      if (!res.ok) {
+        if (res.status === 404) {
+          toast.error('Template not found');
+          setTemplate(null);
+          return;
+        }
+        const text = await res.text();
+        throw new Error(text || 'Failed to load template');
+      }
+      const payload = await res.json();
+      // Accept { data: template } or direct template
+      const templateData = payload?.data ?? payload;
+      if (!templateData) {
+        toast.error('Template not found');
+        setTemplate(null);
+        return;
+      }
+      setTemplate(templateData);
       // hydrate custom fields from preferences if present
-      const prefs = (data as Template).preferences;
+      const prefs = (templateData as Template).preferences;
       if (prefs && Array.isArray(prefs.custom_fields)) {
         setCustomFields(
           (prefs.custom_fields as Array<{ name: string; type?: string }>).map(
@@ -92,7 +108,7 @@ export default function EditTemplatePage() {
           )
         );
       } else {
-        const fetched = data as FetchedTemplate;
+        const fetched = templateData as FetchedTemplate;
         if (Array.isArray(fetched.fields)) {
           setCustomFields(
             (fetched.fields || []).map((f, i) => ({
@@ -240,14 +256,12 @@ export default function EditTemplatePage() {
                 </label>
               </div>
               <div>
-                <a
-                  href={`https://docuseal.com/templates/${id}/edit`}
-                  target="_blank"
-                  rel="noreferrer"
+                <Link
+                  href={`/templates/${id}/edit`}
                   className="inline-block mt-2 text-sm text-indigo-600 underline"
                 >
-                  Open official editor
-                </a>
+                  Open editor in app
+                </Link>
               </div>
             </div>
           </div>

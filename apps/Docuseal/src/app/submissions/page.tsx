@@ -29,7 +29,19 @@ import {
 } from '@/components/ui/select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Loader2, Trash2, PlusCircle, Copy, Download, Eye, Send, Search, Filter, Mail, User, Calendar } from 'lucide-react';
+import {
+  Loader2,
+  Trash2,
+  PlusCircle,
+  Copy,
+  Download,
+  Eye,
+  Send,
+  Search,
+  Filter,
+  User,
+  Calendar,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SubmissionsSkeleton } from '@/components/loading-skeletons';
@@ -46,18 +58,21 @@ interface CreateSubmissionForm {
 
 export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<DocuSeal.Submission[]>([]);
-  const [templates, setTemplates] = useState<{ id: number; name: string }[]>([]);
+  const [templates, setTemplates] = useState<{ id: number; name: string }[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { register, handleSubmit, reset, control, setValue } = useForm<CreateSubmissionForm>({
-    defaultValues: {
-      submitters: [{ email: '', name: '', role: '' }],
-      send_email: true,
-    },
-  });
+  const { register, handleSubmit, reset, control, setValue } =
+    useForm<CreateSubmissionForm>({
+      defaultValues: {
+        submitters: [{ email: '', name: '', role: '' }],
+        send_email: true,
+      },
+    });
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -75,11 +90,20 @@ export default function SubmissionsPage() {
       if (!response.ok) {
         throw new Error('Failed to fetch submissions');
       }
-      const data: DocuSeal.PaginatedResponse<DocuSeal.Submission> = await response.json();
-      setSubmissions(data.data);
+      const raw = await response.json();
+      // Accept multiple shapes: { data: [...] }, { items: [...] }, or direct array
+      let payload: DocuSeal.Submission[] = [];
+      if (Array.isArray(raw)) payload = raw as DocuSeal.Submission[];
+      else if (Array.isArray(raw?.data))
+        payload = raw.data as DocuSeal.Submission[];
+      else if (Array.isArray(raw?.items))
+        payload = raw.items as DocuSeal.Submission[];
+      else payload = [];
+      setSubmissions(payload);
     } catch (error: unknown) {
-      toast.error('Error fetching submissions', { 
-        description: error instanceof Error ? error.message : 'An unknown error occurred' 
+      toast.error('Error fetching submissions', {
+        description:
+          error instanceof Error ? error.message : 'An unknown error occurred',
       });
     } finally {
       setLoading(false);
@@ -92,11 +116,13 @@ export default function SubmissionsPage() {
       if (!response.ok) {
         throw new Error('Failed to fetch templates for form');
       }
-      const data: DocuSeal.PaginatedResponse<DocuSeal.Template> = await response.json();
+      const data: DocuSeal.PaginatedResponse<DocuSeal.Template> =
+        await response.json();
       setTemplates(data.data.map((t) => ({ id: t.id, name: t.name })));
     } catch (error: unknown) {
       toast.error('Error fetching templates for form', {
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        description:
+          error instanceof Error ? error.message : 'An unknown error occurred',
       });
     }
   }, []);
@@ -110,16 +136,16 @@ export default function SubmissionsPage() {
     setCreating(true);
     try {
       console.log('Submitting data:', data);
-      
+
       // Ensure the payload has the correct structure
       const payload = {
         template_id: data.template_id,
         submitters: data.submitters,
         send_email: data.send_email,
       };
-      
+
       console.log('Payload to send:', payload);
-      
+
       const response = await fetch('/api/docuseal/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -129,20 +155,22 @@ export default function SubmissionsPage() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('API error:', errorData);
-        
+
         // Provide user-friendly error messages
-        let errorMessage = errorData.message || errorData.error || 'Failed to create submission';
-        
+        let errorMessage =
+          errorData.message || errorData.error || 'Failed to create submission';
+
         if (errorData.error === 'Template does not contain fields') {
-          errorMessage = 'This template has no form fields. Please add fields to the template in DocuSeal first.';
+          errorMessage =
+            'This template has no form fields. Please add fields to the template in DocuSeal first.';
         }
-        
+
         throw new Error(errorMessage);
       }
 
       const responseData = await response.json();
       console.log('Response data:', responseData);
-      
+
       // DocuSeal API returns an array of submitters, not a full submission
       // We need to refetch the submissions list to get the updated data
       toast.success('Submission created successfully!');
@@ -150,8 +178,9 @@ export default function SubmissionsPage() {
       await fetchSubmissions();
     } catch (error: unknown) {
       console.error('Submission error:', error);
-      toast.error('Error creating submission', { 
-        description: error instanceof Error ? error.message : 'An unknown error occurred' 
+      toast.error('Error creating submission', {
+        description:
+          error instanceof Error ? error.message : 'An unknown error occurred',
       });
     } finally {
       setCreating(false);
@@ -179,7 +208,8 @@ export default function SubmissionsPage() {
       });
     } catch (error: unknown) {
       toast.error('Error deleting submission', {
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        description:
+          error instanceof Error ? error.message : 'An unknown error occurred',
         id: 'delete-submission',
       });
       setSubmissions(originalSubmissions);
@@ -235,7 +265,8 @@ export default function SubmissionsPage() {
           (s.name && s.name.toLowerCase().includes(searchLower))
       );
     const matchesStatus =
-      filterStatus === 'ALL' || submission.status.toUpperCase() === filterStatus;
+      filterStatus === 'ALL' ||
+      submission.status.toUpperCase() === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -279,17 +310,26 @@ export default function SubmissionsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {templates.map((template) => (
-                        <SelectItem key={template.id} value={String(template.id)}>
+                        <SelectItem
+                          key={template.id}
+                          value={String(template.id)}
+                        >
                           {template.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <input type="hidden" {...register('template_id', { valueAsNumber: true })} />
+                  <input
+                    type="hidden"
+                    {...register('template_id', { valueAsNumber: true })}
+                  />
                 </div>
 
                 {fields.map((field, index) => (
-                  <div key={field.id} className="space-y-2 rounded-md border p-4">
+                  <div
+                    key={field.id}
+                    className="space-y-2 rounded-md border p-4"
+                  >
                     <h4 className="font-medium">Submitter {index + 1}</h4>
                     <div>
                       <Label htmlFor={`submitters.${index}.email`}>Email</Label>
@@ -354,7 +394,9 @@ export default function SubmissionsPage() {
                 </div>
 
                 <Button type="submit" disabled={creating}>
-                  {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {creating && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Create
                 </Button>
               </form>
@@ -403,8 +445,8 @@ export default function SubmissionsPage() {
             <h3 className="text-lg font-semibold mb-2">No submissions found</h3>
             <p className="text-muted-foreground text-center mb-4">
               {submissions.length === 0
-                ? "Get started by creating your first submission."
-                : "Try adjusting your search or filter criteria."}
+                ? 'Get started by creating your first submission.'
+                : 'Try adjusting your search or filter criteria.'}
             </p>
             {/* The button to create a submission is already in the header, so this might be redundant */}
           </CardContent>
@@ -431,13 +473,19 @@ export default function SubmissionsPage() {
                           <Send className="h-4 w-4 text-green-600 dark:text-green-400" />
                         </div>
                         <div>
-                          <div className="font-medium">{submission.template.name}</div>
-                          <div className="text-sm text-muted-foreground">ID: {submission.id}</div>
+                          <div className="font-medium">
+                            {submission.template.name}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            ID: {submission.id}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusBadgeVariant(submission.status)}>
+                      <Badge
+                        className={getStatusBadgeVariant(submission.status)}
+                      >
                         {submission.status}
                       </Badge>
                     </TableCell>
@@ -448,10 +496,14 @@ export default function SubmissionsPage() {
                         </div>
                         <div>
                           <div className="text-sm font-medium">
-                            {submission.submitters.map(s => s.name || 'No Name').join(', ')}
+                            {submission.submitters
+                              .map((s) => s.name || 'No Name')
+                              .join(', ')}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {submission.submitters.map(s => s.email).join(', ')}
+                            {submission.submitters
+                              .map((s) => s.email)
+                              .join(', ')}
                           </div>
                         </div>
                       </div>
@@ -460,10 +512,13 @@ export default function SubmissionsPage() {
                       <div className="flex items-center space-x-1">
                         <Calendar className="h-3 w-3" />
                         <span className="text-sm">
-                          {new Date(submission.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric'
-                          })}
+                          {new Date(submission.created_at).toLocaleDateString(
+                            'en-US',
+                            {
+                              month: 'short',
+                              day: 'numeric',
+                            }
+                          )}
                         </span>
                       </div>
                     </TableCell>
@@ -478,7 +533,9 @@ export default function SubmissionsPage() {
                               navigator.clipboard.writeText(
                                 submission.submitters[0].embed_src || ''
                               );
-                              toast.success('Signing link copied to clipboard!');
+                              toast.success(
+                                'Signing link copied to clipboard!'
+                              );
                             }}
                           >
                             <Copy className="h-4 w-4" />
@@ -492,9 +549,15 @@ export default function SubmissionsPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
                                 <Download className="h-4 w-4" />
-                                <span className="sr-only">Download document</span>
+                                <span className="sr-only">
+                                  Download document
+                                </span>
                               </Button>
                             </Link>
                           )}
@@ -504,21 +567,27 @@ export default function SubmissionsPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
                               <Eye className="h-4 w-4" />
                               <span className="sr-only">View signing form</span>
                             </Button>
                           </Link>
                         )}
                         {submission.submitters[0] && (
-                           <Button
-                           variant="ghost"
-                           size="icon"
-                           className="mr-2"
-                           onClick={() => onResendInvite(submission.submitters[0].id)}
-                         >
-                           <Send className="h-4 w-4" />
-                         </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="mr-2"
+                            onClick={() =>
+                              onResendInvite(submission.submitters[0].id)
+                            }
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
                         )}
                         <Button
                           variant="ghost"

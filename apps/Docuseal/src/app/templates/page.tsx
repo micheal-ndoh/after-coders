@@ -23,7 +23,16 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Loader2, Edit, Trash2, PlusCircle, FileText, ExternalLink, Search, Filter } from 'lucide-react';
+import {
+  Loader2,
+  Edit,
+  Trash2,
+  PlusCircle,
+  FileText,
+  ExternalLink,
+  Search,
+  Filter,
+} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { TemplatesSkeleton } from '@/components/loading-skeletons';
 
@@ -44,8 +53,10 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'draft' | 'published'
+  >('all');
   const {
     register,
     handleSubmit,
@@ -139,8 +150,11 @@ export default function TemplatesPage() {
 
   // Filter templates based on search and status
   const filteredTemplates = templates.filter((template) => {
-    const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || template.status === statusFilter;
+    const matchesSearch = template.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'all' || template.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -183,7 +197,9 @@ export default function TemplatesPage() {
                     disabled={creating}
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-sm">{errors.name.message}</p>
+                    <p className="text-red-500 text-sm">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -196,11 +212,15 @@ export default function TemplatesPage() {
                     accept=".pdf,.docx,.xlsx,.jpeg,.png,.zip,.html"
                   />
                   {errors.file && (
-                    <p className="text-red-500 text-sm">{errors.file.message}</p>
+                    <p className="text-red-500 text-sm">
+                      {errors.file.message}
+                    </p>
                   )}
                 </div>
                 <Button type="submit" disabled={creating}>
-                  {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {creating && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Create
                 </Button>
               </form>
@@ -226,7 +246,11 @@ export default function TemplatesPage() {
               <Filter className="h-4 w-4 text-muted-foreground" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as "all" | "draft" | "published")}
+                onChange={(e) =>
+                  setStatusFilter(
+                    e.target.value as 'all' | 'draft' | 'published'
+                  )
+                }
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="all">All Status</option>
@@ -246,8 +270,8 @@ export default function TemplatesPage() {
             <h3 className="text-lg font-semibold mb-2">No templates found</h3>
             <p className="text-muted-foreground text-center mb-4">
               {templates.length === 0
-                ? "Get started by creating your first template."
-                : "Try adjusting your search or filter criteria."}
+                ? 'Get started by creating your first template.'
+                : 'Try adjusting your search or filter criteria.'}
             </p>
             {/* This button is redundant as it's in the header */}
           </CardContent>
@@ -274,46 +298,56 @@ export default function TemplatesPage() {
                         </div>
                         <div>
                           <div className="font-medium">{template.name}</div>
-                          <div className="text-sm text-muted-foreground">ID: {template.id}</div>
+                          <div className="text-sm text-muted-foreground">
+                            ID: {template.id}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={template.status === "published" ? "default" : "secondary"}
-                        className={template.status === "published" 
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400" 
-                          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                      <Badge
+                        variant={
+                          template.status === 'published'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                        className={
+                          template.status === 'published'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                         }
                       >
                         {template.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(template.created_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
+                      {new Date(template.created_at).toLocaleDateString(
+                        'en-US',
+                        {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        }
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end space-x-2">
-                        <Link 
-                          href={`https://docuseal.com/templates/${template.id}/edit`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                        >
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Link href={`/templates/${template.id}/edit`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
                             <Edit className="h-4 w-4" />
                             <span className="sr-only">Edit template</span>
                           </Button>
                         </Link>
-                        <Link 
-                          href={`https://docuseal.com/templates/${template.id}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                        >
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Link href={`/templates/${template.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
                             <ExternalLink className="h-4 w-4" />
                             <span className="sr-only">View template</span>
                           </Button>
