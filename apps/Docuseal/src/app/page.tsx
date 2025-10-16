@@ -12,19 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  FileText,
-  Upload,
-  User,
-  Calendar,
-  MoreVertical,
-  Grid3X3,
-  AlignJustify,
-  ExternalLink,
-  Edit,
-  Download,
-  Trash2,
-} from 'lucide-react';
+import { FileText, Upload, Plus, User, Calendar, MoreVertical, CloudUpload, LayoutGrid, Menu, ExternalLink, Edit, Download, Trash2, Mail } from 'lucide-react';
 import { DashboardSkeleton } from '@/components/loading-skeletons';
 
 export default function HomePage() {
@@ -111,9 +99,7 @@ export default function HomePage() {
       <div className="flex min-h-screen flex-col items-center justify-center px-4">
         <div className="mx-auto max-w-md text-center">
           <div className="mb-8 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-              <span className="text-4xl">🦭</span>
-            </div>
+            <span className="text-6xl">🐵</span>
           </div>
           <h1 className="mb-4 text-3xl font-bold tracking-tight">
             Welcome to DocuSeal App
@@ -143,36 +129,40 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6">
-        {/* Navigation and Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {/* Navigation Boxes */}
-            <div className="flex items-center space-x-1">
-              {/* Document Templates Box (Active) */}
-              <div className="flex items-center space-x-2 rounded-lg bg-black px-3 py-2 text-white">
-                <Grid3X3 className="h-4 w-4" />
+      {/* Sticky Navigation and Header */}
+      <div className="sticky top-16 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {/* Navigation Boxes */}
+              <div className="flex items-center space-x-1">
+                {/* Document Templates Box (Always active since it's current page) */}
+                <div className="flex items-center space-x-2 rounded-lg px-3 py-2 bg-black text-white dark:bg-white dark:text-black">
+                  <LayoutGrid className="h-4 w-4" />
+                </div>
+                
+                {/* Submissions Box */}
+                <Link href="/submissions">
+                  <div className="flex items-center space-x-2 rounded-lg px-3 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                    <Menu className="h-4 w-4" />
+                  </div>
+                </Link>
               </div>
-
-              {/* Submissions Box */}
-              <Link
-                href="/submissions"
-                className="flex items-center space-x-2 rounded-lg bg-white border border-gray-200 px-3 py-2 text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                <AlignJustify className="h-4 w-4" />
-              </Link>
+              
+              {/* Title */}
+              <h1 className="text-2xl font-bold">Document Templates</h1>
             </div>
-
-            {/* Document Templates Title */}
-            <h1 className="text-2xl font-bold">Document Templates</h1>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm">
-              <Upload className="mr-2 h-4 w-4" />
-              UPLOAD
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button variant="outline" size="sm">
+                <Upload className="mr-2 h-4 w-4" />
+                UPLOAD
+              </Button>
+            </div>
           </div>
         </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
 
         {/* Templates Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
