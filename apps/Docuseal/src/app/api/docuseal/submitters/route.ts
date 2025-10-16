@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
 
-const DOCUSEAL_API_BASE_URL = "https://api.docuseal.com";
+const DOCUSEAL_API_BASE_URL = process.env.DOCUSEAL_URL || "https://api.docuseal.com";
 
 export async function GET(request: Request) {
   const session = await getServerSession();

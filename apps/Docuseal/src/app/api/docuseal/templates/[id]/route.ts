@@ -3,7 +3,7 @@ import { getServerSession } from "@/lib/auth";
 
 export const runtime = 'nodejs';
 
-const DOCUSEAL_API_BASE_URL = "https://api.docuseal.com";
+const DOCUSEAL_API_BASE_URL = process.env.DOCUSEAL_URL || "https://api.docuseal.com";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();

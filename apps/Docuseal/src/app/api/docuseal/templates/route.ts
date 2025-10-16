@@ -3,8 +3,8 @@ import { getServerSession } from "@/lib/auth";
 
 export const runtime = 'nodejs';
 
-// DocuSeal public API base (docs show endpoints under https://api.docuseal.com)
-const DOCUSEAL_API_BASE_URL = "https://api.docuseal.com";
+// DocuSeal API base - can be self-hosted or cloud (https://api.docuseal.com)
+const DOCUSEAL_API_BASE_URL = process.env.DOCUSEAL_URL || "https://api.docuseal.com";
 
 export async function GET(request: Request) {
   const session = await getServerSession();
