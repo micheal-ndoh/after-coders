@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -45,12 +46,13 @@ interface CreateSubmissionForm {
 }
 
 export default function SubmissionsPage() {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submissions, setSubmissions] = useState<DocuSeal.Submission[]>([]);
-  const [templates, setTemplates] = useState<{ id: number; name: string }[]>(
-    []
-  );
+  const [templates, setTemplates] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -144,13 +146,13 @@ export default function SubmissionsPage() {
         const errorData = await response.json();
         console.error('API error:', errorData);
 
-        // Provide user-friendly error messages
-        let errorMessage =
-          errorData.message || errorData.error || 'Failed to create submission';
-
-        if (errorData.error === 'Template does not contain fields') {
-          errorMessage =
-            'This template has no form fields. Please add fields to the template in DocuSeal first.';
+        let errorMessage = 'Failed to create submission.';
+        if (errorData?.error === 'Template does not contain fields') {
+          errorMessage = 'This template has no fields. Please edit the template to add signature fields before creating a submission.';
+        } else if (errorData?.message) {
+          errorMessage = errorData.message;
+        } else if (typeof errorData?.error === 'string') {
+          errorMessage = errorData.error;
         }
 
         throw new Error(errorMessage);
@@ -201,6 +203,42 @@ export default function SubmissionsPage() {
         id: 'delete-submission',
       });
       setSubmissions(originalSubmissions);
+    }
+  };
+
+  const onUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const toastId = toast.loading('Uploading document and creating template...');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/docuseal/templates/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Upload failed');
+      }
+
+      const newTemplate = await res.json();
+      toast.success('Template created successfully! Redirecting to editor...', { id: toastId });
+
+      router.push(`/templates/${newTemplate.id}/edit`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Upload failed: ${message}`, { id: toastId });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -287,9 +325,25 @@ export default function SubmissionsPage() {
               <h1 className="text-2xl font-bold">Submissions</h1>
             </div>
             <div className="flex items-center space-x-3">
-              <Button variant="outline" size="sm">
-                <Upload className="mr-2 h-4 w-4" />
-                UPLOAD
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={onUpload}
+                className="hidden"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.bmp"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="mr-2 h-4 w-4" />
+                )}
+                {isUploading ? 'UPLOADING...' : 'UPLOAD'}
               </Button>
             </div>
           </div>
