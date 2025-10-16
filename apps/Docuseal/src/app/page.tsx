@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useSession } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
@@ -12,11 +13,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+<<<<<<< Updated upstream
 import { FileText, Upload, Plus, User, Calendar, MoreVertical, CloudUpload, LayoutGrid, Menu, ExternalLink, Edit, Download, Trash2, Mail } from 'lucide-react';
+=======
+import {
+  FileText,
+  Upload,
+  User,
+  Calendar,
+  MoreVertical,
+  Grid3X3,
+  AlignJustify,
+  ExternalLink,
+  Edit,
+  Download,
+  Trash2,
+  Loader2,
+} from 'lucide-react';
+>>>>>>> Stashed changes
 import { DashboardSkeleton } from '@/components/loading-skeletons';
 
 export default function HomePage() {
   const { data: session, isPending } = useSession();
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [templates, setTemplates] = useState<
     {
@@ -36,6 +56,7 @@ export default function HomePage() {
     }[]
   >([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -87,6 +108,72 @@ export default function HomePage() {
       const message = err instanceof Error ? err.message : String(err);
       toast.error('Delete failed: ' + message);
       setTemplates(original);
+    }
+  };
+
+  const onDownloadTemplate = async (template: any) => {
+    const doc = Array.isArray(template.documents) && template.documents.length > 0
+      ? template.documents[0]
+      : null;
+
+    if (!doc || !doc.url) {
+      toast.error('No downloadable document found for this template.');
+      return;
+    }
+
+    try {
+      const res = await fetch(doc.url);
+      if (!res.ok) {
+        throw new Error('Failed to fetch the document for download.');
+      }
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = doc.filename || template.name || 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
+      toast.success('Download started.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Download failed: ${message}`);
+    }
+  };
+
+  const onUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const toastId = toast.loading('Uploading document and creating template...');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/docuseal/templates/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Upload failed');
+      }
+
+      const newTemplate = await res.json();
+      toast.success('Template created successfully! Redirecting to editor...', { id: toastId });
+
+      router.push(`/templates/${newTemplate.id}/edit`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Upload failed: ${message}`, { id: toastId });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -158,6 +245,34 @@ export default function HomePage() {
                 UPLOAD
               </Button>
             </div>
+<<<<<<< Updated upstream
+=======
+
+            {/* Document Templates Title */}
+            <h1 className="text-2xl font-bold">Document Templates</h1>
+          </div>
+          <div className="flex items-center space-x-3">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={onUpload}
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.bmp"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="mr-2 h-4 w-4" />
+              )}
+              {isUploading ? 'UPLOADING...' : 'UPLOAD'}
+            </Button>
+>>>>>>> Stashed changes
           </div>
         </div>
       </div>
@@ -205,7 +320,10 @@ export default function HomePage() {
                           Edit
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
+                      <DropdownMenuItem
+                        onSelect={() => onDownloadTemplate(template)}
+                        className="flex items-center"
+                      >
                         <Download className="mr-2 h-4 w-4" />
                         Download
                       </DropdownMenuItem>
@@ -259,7 +377,15 @@ export default function HomePage() {
               <p className="mb-4 text-sm text-muted-foreground">
                 Click to upload or drag and drop
               </p>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 Choose File
               </Button>
             </CardContent>
