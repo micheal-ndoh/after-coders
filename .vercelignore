@@ -1,0 +1,14 @@
+# Ignore all files by default
+*
+
+# Un-ignore the Docuseal app
+!/apps/Docuseal/**
+
+# Un-ignore shared libraries
+!/libs/**
+
+# Un-ignore root configuration files needed for the build
+!/package.json
+!/package-lock.json
+!/nx.json
+!/tsconfig.base.json
