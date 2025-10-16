@@ -35,8 +35,6 @@ services:
 
   postgres-nextjs:
     image: postgres:15
-    volumes:
-      - './pg_data_nextjs:/var/lib/postgresql/data'
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
