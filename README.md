@@ -1,82 +1,236 @@
-# AfterCoders
+# Project Setup Guide
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+This guide will help you set up the Docuseal project for local development using Docker.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+## Prerequisites
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/next?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+- Docker and Docker Compose installed
+- Node.js 20+ (if running without Docker)
+- Git
 
-## Finish your CI setup
+## Architecture Overview
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/Qk5K0TAVBz)
+The project consists of two main applications:
 
+1. **Next.js App** (Custom Docuseal Frontend) - Port 3000
+2. **Docuseal OSS** (Official Docuseal Service) - Port 3001
+3. **PostgreSQL** (Database for Docuseal OSS) - Port 5432
 
-## Run tasks
+## Local Development Setup
 
-To run the dev server for your app, use:
+### 1. Clone and Navigate to Project
 
-```sh
-npx nx dev after-coders
+```bash
+cd apps/Docuseal
 ```
 
-To create a production bundle:
+### 2. Environment Configuration
 
-```sh
-npx nx build after-coders
+Create a `.env` file in the project root (copy from `.env.example` if available):
+
+```env
+# Database Configuration (for Next.js app)
+DATABASE_URL="your_database_url_here"
+DIRECT_DATABASE_URL="your_direct_database_url_here"
+
+# Docuseal API Configuration
+DOCUSEAL_URL="http://localhost:3001"
+DOCUSEAL_API_KEY="your_api_key_here"
+
+# Other environment variables
+NODE_ENV=development
 ```
 
-To see all available targets to run for a project, run:
+### 3. Start All Services with Docker
 
-```sh
-npx nx show project after-coders
+**Start all services:**
+```bash
+docker-compose up
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
-
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-Use the plugin's generator to create new projects.
-
-To generate a new application, use:
-
-```sh
-npx nx g @nx/next:app demo
+**Start in detached mode (background):**
+```bash
+docker-compose up -d
 ```
 
-To generate a new library, use:
+**Start only specific services:**
+```bash
+# Only Next.js app
+docker-compose up nextjs-app
 
-```sh
-npx nx g @nx/react:lib mylib
+# Only Docuseal OSS + Database
+docker-compose up app postgres
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+### 4. Access Applications
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- **Next.js App**: http://localhost:3000
+- **Docuseal OSS**: http://localhost:3001
 
+### 5. Configure Docuseal API (First Time Setup)
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+1. Navigate to http://localhost:3001
+2. Create an admin account on first launch
+3. Go to **Settings → API**
+4. Create a new API key
+5. Copy the generated key and add it to your `.env` file:
+   ```env
+   DOCUSEAL_API_KEY="your_generated_api_key"
+   ```
+6. Restart the Next.js app:
+   ```bash
+   docker-compose restart nextjs-app
+   ```
 
-## Install Nx Console
+## Common Commands
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+### Docker Commands
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+**Stop all services:**
+```bash
+docker-compose down
+```
 
-## Useful links
+**Rebuild containers (after dependency changes):**
+```bash
+docker-compose up --build
+```
 
-Learn more:
+**View logs:**
+```bash
+# All services
+docker-compose logs -f
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/next?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+# Specific service
+docker-compose logs -f nextjs-app
+docker-compose logs -f app
+```
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+**Remove all containers and volumes:**
+```bash
+docker-compose down -v
+```
+
+### Database Commands
+
+**Run Prisma migrations (inside container):**
+```bash
+docker-compose exec nextjs-app npx prisma migrate dev
+```
+
+**Generate Prisma client:**
+```bash
+docker-compose exec nextjs-app npx prisma generate
+```
+
+**Open Prisma Studio:**
+```bash
+docker-compose exec nextjs-app npx prisma studio
+```
+
+## Development Workflow
+
+### Hot Reload
+
+The Next.js app is configured with volume mounts for hot reload. Any changes to your code will automatically reflect in the running container.
+
+### Installing New Dependencies
+
+**Option 1: Rebuild container**
+```bash
+# Add dependency to package.json
+docker-compose up --build nextjs-app
+```
+
+**Option 2: Install inside container**
+```bash
+docker-compose exec nextjs-app npm install <package-name>
+```
+
+## Production Setup (Optional)
+
+### Running with Custom Domain and SSL
+
+The project includes Caddy for automatic SSL certificate management. To run with a custom domain:
+
+**Start with SSL enabled:**
+```bash
+sudo HOST=your-domain.com docker-compose up
+```
+
+This will:
+- Start all services with Caddy reverse proxy
+- Automatically obtain SSL certificates via Let's Encrypt
+- Serve applications over HTTPS
+
+**Access applications:**
+- **Next.js App**: https://your-domain.com (via Caddy)
+- **Docuseal OSS**: http://localhost:3001 (direct access)
+
+**Note:** For production deployment, ensure:
+- Your domain DNS points to your server IP
+- Ports 80 and 443 are open in your firewall
+- You have proper environment variables configured
+
+## Troubleshooting
+
+### Port Already in Use
+
+If ports 3000 or 3001 are already in use:
+```bash
+# Find process using the port
+lsof -i :3000
+lsof -i :3001
+
+# Kill the process
+kill -9 <PID>
+```
+
+### Database Connection Issues
+
+- Ensure your `.env` file has the correct `DATABASE_URL`
+- Check if your database is running and accessible
+- Verify database credentials
+
+### Container Build Fails
+
+```bash
+# Clean up Docker cache
+docker-compose down
+docker system prune -a
+
+# Rebuild from scratch
+docker-compose build --no-cache
+docker-compose up
+```
+
+### Permission Issues
+
+If you encounter permission issues with volumes:
+```bash
+# Fix ownership (Linux/Mac)
+sudo chown -R $USER:$USER .
+```
+
+## Project Structure
+
+```
+apps/Docuseal/
+├── src/                    # Next.js application source
+├── prisma/                 # Database schema and migrations
+├── public/                 # Static assets
+├── docker-compose.yml      # Docker services configuration
+├── Dockerfile.dev          # Development Dockerfile
+├── .dockerignore          # Files to exclude from Docker build
+├── .env                   # Environment variables (not in git)
+└── package.json           # Node.js dependencies
+```
+
+## Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Docuseal Official Docs](https://www.docuseal.com/docs)
+- [Docuseal GitHub Repository](https://github.com/docusealco/docuseal)
+- [Docuseal API Reference](https://www.docuseal.com/docs/api)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Prisma Documentation](https://www.prisma.io/docs)
