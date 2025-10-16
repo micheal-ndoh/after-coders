@@ -3,13 +3,23 @@
 import { useState, useEffect } from 'react';
 import { DocusealBuilder } from '@docuseal/react';
 
-const DocusealEditor = () => {
+interface DocusealEditorProps {
+  templateId?: number;
+}
+
+const DocusealEditor = ({ templateId }: DocusealEditorProps) => {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        const response = await fetch('/api/docuseal/builder_token', { method: 'POST' });
+        const response = await fetch('/api/docuseal/builder_token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ template_id: templateId }),
+        });
         const data = await response.json();
         setToken(data.token);
       } catch (error) {
@@ -18,7 +28,7 @@ const DocusealEditor = () => {
     };
 
     fetchToken();
-  }, []);
+  }, [templateId]);
 
   return token ? <DocusealBuilder token={token} /> : <div>Loading...</div>;
 };
