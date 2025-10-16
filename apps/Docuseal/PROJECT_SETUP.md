@@ -14,7 +14,8 @@ The project consists of two main applications:
 
 1. **Next.js App** (Custom Docuseal Frontend) - Port 3000
 2. **Docuseal OSS** (Official Docuseal Service) - Port 3001
-3. **PostgreSQL** (Database for Docuseal OSS) - Port 5432
+3. **PostgreSQL for Next.js** - Port 5433
+4. **PostgreSQL for Docuseal** - Port 5432
 
 ## Local Development Setup
 
@@ -30,8 +31,12 @@ Create a `.env` file in the project root (copy from `.env.example` if available)
 
 ```env
 # Database Configuration (for Next.js app)
-DATABASE_URL="your_database_url_here"
-DIRECT_DATABASE_URL="your_direct_database_url_here"
+
+# For Prisma Client (inside the container)
+DATABASE_URL="postgresql://postgres:postgres@postgres-nextjs:5432/nextjs_db?schema=public"
+
+# For Prisma Migrate/CLI (from your local machine)
+DIRECT_DATABASE_URL="postgresql://postgres:postgres@localhost:5433/nextjs_db?schema=public"
 
 # Docuseal API Configuration
 DOCUSEAL_URL="http://localhost:3001"
@@ -40,6 +45,10 @@ DOCUSEAL_API_KEY="your_api_key_here"
 # Other environment variables
 NODE_ENV=development
 ```
+
+**Important**: Notice the two different database URLs:
+- `DATABASE_URL` uses the service name `postgres-nextjs` and the internal Docker port `5432`. This is for the Next.js app to connect to the database from within the container.
+- `DIRECT_DATABASE_URL` uses `localhost` and the mapped port `5433`. This is for running Prisma commands like `migrate` or `studio` from your local machine.
 
 ### 3. Start All Services with Docker
 
@@ -113,10 +122,14 @@ docker-compose down -v
 
 ### Database Commands
 
-**Run Prisma migrations (inside container):**
+**Database Migrations:**
+Migrations are applied automatically every time the `nextjs-app` container starts. You will see the migration status in the Docker logs.
+
+If you need to create a *new* migration after modifying the `schema.prisma` file, you can run the following command:
 ```bash
-docker-compose exec nextjs-app npx prisma migrate dev
+docker-compose exec nextjs-app npx prisma migrate dev --name your-migration-name
 ```
+This will generate a new migration file, which will then be applied automatically the next time you start the container.
 
 **Generate Prisma client:**
 ```bash
