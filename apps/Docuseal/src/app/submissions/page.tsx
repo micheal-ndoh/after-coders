@@ -29,19 +29,7 @@ import {
 } from '@/components/ui/select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
-import {
-  Loader2,
-  Trash2,
-  PlusCircle,
-  Copy,
-  Download,
-  Eye,
-  Send,
-  Search,
-  Filter,
-  User,
-  Calendar,
-} from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, Copy, Download, Eye, Send, Search, Filter, Mail, User, Calendar, LayoutGrid, Menu, Upload } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SubmissionsSkeleton } from '@/components/loading-skeletons';
@@ -274,16 +262,49 @@ export default function SubmissionsPage() {
     return <SubmissionsSkeleton />;
   }
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Submissions</h1>
-            <p className="text-muted-foreground">
-              Track and manage document submissions and signatures.
-            </p>
+    <div className="min-h-screen bg-background">
+      {/* Sticky Navigation and Header */}
+      <div className="sticky top-16 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {/* Navigation Boxes */}
+              <div className="flex items-center space-x-1">
+                {/* Document Templates Box */}
+                <Link href="/">
+                  <div className="flex items-center space-x-2 rounded-lg px-3 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                    <LayoutGrid className="h-4 w-4" />
+                  </div>
+                </Link>
+                
+                {/* Submissions Box (Active) */}
+                <div className="flex items-center space-x-2 rounded-lg px-3 py-2 bg-black text-white dark:bg-white dark:text-black">
+                  <Menu className="h-4 w-4" />
+                </div>
+              </div>
+              
+              {/* Title */}
+              <h1 className="text-2xl font-bold">Submissions</h1>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button variant="outline" size="sm">
+                <Upload className="mr-2 h-4 w-4" />
+                UPLOAD
+              </Button>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-muted-foreground">
+                Track and manage document submissions and signatures.
+              </p>
+            </div>
           <Dialog>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">
@@ -607,6 +628,7 @@ export default function SubmissionsPage() {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }
