@@ -13,11 +13,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-<<<<<<< Updated upstream
-import { FileText, Upload, Plus, User, Calendar, MoreVertical, CloudUpload, LayoutGrid, Menu, ExternalLink, Edit, Download, Trash2, Mail } from 'lucide-react';
-=======
 import {
   FileText,
+  Menu,
+  LayoutGrid,
   Upload,
   User,
   Calendar,
@@ -30,7 +29,6 @@ import {
   Trash2,
   Loader2,
 } from 'lucide-react';
->>>>>>> Stashed changes
 import { DashboardSkeleton } from '@/components/loading-skeletons';
 
 export default function HomePage() {
@@ -235,23 +233,9 @@ export default function HomePage() {
                   </div>
                 </Link>
               </div>
-              
               {/* Title */}
               <h1 className="text-2xl font-bold">Document Templates</h1>
             </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" size="sm">
-                <Upload className="mr-2 h-4 w-4" />
-                UPLOAD
-              </Button>
-            </div>
-<<<<<<< Updated upstream
-=======
-
-            {/* Document Templates Title */}
-            <h1 className="text-2xl font-bold">Document Templates</h1>
-          </div>
-          <div className="flex items-center space-x-3">
             <input
               type="file"
               ref={fileInputRef}
@@ -272,7 +256,6 @@ export default function HomePage() {
               )}
               {isUploading ? 'UPLOADING...' : 'UPLOAD'}
             </Button>
->>>>>>> Stashed changes
           </div>
         </div>
       </div>
