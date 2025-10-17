@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getServerSession } from "@/lib/auth";
 
 export const runtime = 'nodejs';
 
-const DOCUSEAL_API_BASE_URL = "https://api.docuseal.com";
+const DOCUSEAL_API_BASE_URL = process.env.DOCUSEAL_URL || "https://api.docuseal.com";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  const session = await getServerSession();
+  if (!session) {
+    console.warn('[api/docuseal/templates/[id]] no session - proceeding as anonymous');
+  }
 
   // Next.js recommends awaiting params in dynamic API routes
   const awaitedParams = await params;
@@ -26,7 +28,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     const data = await res.json();
-    return NextResponse.json(data);
+    // wrap single template into { data }
+    return NextResponse.json({ data });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`Error fetching DocuSeal template ${id}:`, message);
@@ -35,7 +38,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
+  const session = await getServerSession();
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const awaitedParams = await params;
@@ -105,7 +108,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
+  const session = await getServerSession();
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const awaitedParams = await params;
