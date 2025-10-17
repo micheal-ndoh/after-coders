@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Loader2, Trash2, PlusCircle, Copy, Download, Eye, Send, Search, Filter, Mail, User, Calendar, LayoutGrid, Menu, Upload } from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, Copy, Download, Eye, Send, Search, Filter, User, Calendar, LayoutGrid, Menu, Upload } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SubmissionsSkeleton } from '@/components/loading-skeletons';

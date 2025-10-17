@@ -21,8 +21,6 @@ import {
   User,
   Calendar,
   MoreVertical,
-  Grid3X3,
-  AlignJustify,
   ExternalLink,
   Edit,
   Download,
